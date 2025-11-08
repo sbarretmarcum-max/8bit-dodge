@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>8-Bit Dodge</title>
+<style>
+html, body {margin:0; padding:0; height:100%; background:#111; color:#ddd; font-family:monospace; touch-action:none;}
+body {display:flex; flex-direction:column; align-items:center; justify-content:flex-start;}
+h1 {margin-top:10px;}
+canvas {image-rendering:pixelated; border:4px solid #222; background:#5aa; margin-top:10px;}
+.hud {margin:10px; font-size:16px;}
+.touch-controls {position:fixed; bottom:10px; width:100%; display:flex; justify-content:center; gap:15px;}
+.touch-btn {width:50px; height:50px; background:#222; color:#fff; border-radius:8px; display:flex; justify-content:center; align-items:center; font-size:20px; user-select:none; touch-action:none;}
+button {margin-left:10px; padding:6px 10px; background:#222; color:#fff; border:1px solid #444; cursor:pointer;}
+</style>
+</head>
+<body>
+<h1>8-Bit Dodge</h1>
+<canvas id="game" width="160" height="120"></canvas>
+<div class="hud">
+  Score: <span id="score">0</span>
+  Lives: <span id="lives">3</span>
+  <button id="restart">Restart</button>
+</div>
+<div class="touch-controls">
+  <div id="left" class="touch-btn">◀</div>
+  <div id="jump" class="touch-btn">▲</div>
+  <div id="right" class="touch-btn">▶</div>
+</div>
+
+<script>
+const c=document.getElementById('game'), ctx=c.getContext('2d');
+const scoreEl=document.getElementById('score'), livesEl=document.getElementById('lives');
+const restartBtn=document.getElementById('restart');
+let keys={ArrowLeft:false,ArrowRight:false,ArrowUp:false};
+['left','right','jump'].forEach(id=>{
+  const k=id==='left'?'ArrowLeft':id==='right'?'ArrowRight':'ArrowUp';
+  const el=document.getElementById(id);
+  el.addEventListener('touchstart',()=>keys[k]=true);
+  el.addEventListener('touchend',()=>keys[k]=false);
+});
+window.addEventListener('keydown',e=>keys[e.key]=true);
+window.addEventListener('keyup',e=>keys[e.key]=false);
+
+let player, obstacles, stars, score, lives, tick, spawnT, gravity, lastTime, running;
+
+function rand(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+function coll(a,b){return!(a.x+a.w<=b.x||b.x+b.w<=a.x||a.y+a.h<=b.y||b.y+b.h<=a.y);}
+
+function init(){
+  player={x:76,y:108,w:8,h:8,vx:0,vy:0,onG:true};
+  obstacles=[];stars=[];score=0;lives=3;tick=0;spawnT=0;gravity=0.25;
+  scoreEl.textContent=score;livesEl.textContent=lives;
+  lastTime=performance.now();running=true;loop(lastTime);
+}
+restartBtn.onclick=init;
+
+function loop(now){
+  if(!running)return;
+  const dt=Math.min((now-lastTime)/16.6667,5);lastTime=now;
+  update(dt);render();requestAnimationFrame(loop);
+}
+
+function spawnObstacle(){const s=rand(6,14);obstacles.push({x:rand(0,160-s),y:-s,w:s,h:s,vy:1+tick*0.002});}
+function spawnStar(){const s=4;stars.push({x:rand(0,156),y:-s,w:s,h:s,vy:0.6+tick*0.0012});}
+
+function update(dt){
+  tick++;
+  const speed=1.6+tick*0.0008;
+  player.vx=keys.ArrowLeft?-speed:keys.ArrowRight?speed:0;
+  if(keys.ArrowUp&&player.onG){player.vy=-4.2;player.onG=false;}
+  player.vy+=gravity;player.x+=player.vx;player.y+=player.vy;
+  if(player.x<0)player.x=0;if(player.x+player.w>160)player.x=152;
+  if(player.y+player.h>=120){player.y=112;player.vy=0;player.onG=true;}
+  spawnT+=dt;if(spawnT>Math.max(10-tick*0.01,3)){spawnT=0;if(Math.random()<0.75)spawnObstacle();else spawnStar();}
+
+  for(let i=obstacles.length-1;i>=0;i--){
+    let o=obstacles[i];o.vy+=0.01*dt;o.y+=o.vy*dt*60/16.6667;
+    if(coll(player,o)){lives--;livesEl.textContent=lives;player.vy=-2.5;player.y-=8;obstacles.splice(i,1);if(lives<=0){gameOver();return;}}
+    else if(o.y>170)obstacles.splice(i,1);
+  }
+  for(let i=stars.length-1;i>=0;i--){
+    let s=stars[i];s.vy+=0.003*dt;s.y+=s.vy*dt*60/16.6667;
+    if(coll(player,s)){score+=10;scoreEl.textContent=score;stars.splice(i,1);}
+    else if(s.y>140)stars.splice(i,1);
+  }
+  if(tick%60===0){score++;scoreEl.textContent=score;}
+}
+
+function gameOver(){running=false;ctx.fillStyle='#0008';ctx.fillRect(0,0,160,120);ctx.fillStyle='#fff';ctx.font='8px monospace';ctx.fillText('GAME OVER',44,54);ctx.fillText('Score:'+score,52,64);}
+
+function drawRect(x,y,w,h,col){ctx.fillStyle=col;ctx.fillRect(Math.floor(x),Math.floor(y),w,h);}
+function render(){
+  ctx.fillStyle='#6ab';ctx.fillRect(0,0,160,120);
+  ctx.fillStyle='#2a2';ctx.fillRect(0,112,160,8);
+  stars.forEach(s=>{drawRect(s.x,s.y,s.w,s.h,'#ffea00');ctx.fillStyle='#fff2';ctx.fillRect(s.x+1,s.y+1,s.w-2,s.h-2);});
+  obstacles.forEach(o=>{ctx.fillStyle='#8b0000';ctx.fillRect(o.x,o.y+o.h/2,o.w,o.h/2);ctx.beginPath();ctx.moveTo(o.x,o.y+o.h/2);ctx.lineTo(o.x+o.w/2,o.y);ctx.lineTo(o.x+o.w,o.y+o.h/2);ctx.closePath();ctx.fill();});
+  drawRect(player.x,player.y,player.w,player.h,'#ff6b6b');drawRect(player.x+1,player.y+2,1,1,'#000');drawRect(player.x+5,player.y+2,1,1,'#000');ctx.fillStyle='#0004';ctx.fillRect(player.x+1,player.y+player.h,player.w-2,2);
+}
+
+init();
+</script>
+</body>
+</html>

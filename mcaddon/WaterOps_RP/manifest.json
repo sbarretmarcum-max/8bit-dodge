@@ -1,0 +1,17 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "Water Ops RP",
+    "description": "Resources for water guns and helicopter.",
+    "uuid": "3eaf2f67-aa78-4f8b-81f0-a1f575f66f41",
+    "version": [1, 0, 0],
+    "min_engine_version": [1, 21, 0]
+  },
+  "modules": [
+    {
+      "type": "resources",
+      "uuid": "fd5d81dd-fb0c-4181-af97-7f9d2b8fc39f",
+      "version": [1, 0, 0]
+    }
+  ]
+}

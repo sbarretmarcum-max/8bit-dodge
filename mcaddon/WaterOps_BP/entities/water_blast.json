@@ -1,0 +1,36 @@
+{
+  "format_version": "1.20.50",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "wo:water_blast",
+      "is_spawnable": false,
+      "is_summonable": true,
+      "is_experimental": false
+    },
+    "components": {
+      "minecraft:physics": {},
+      "minecraft:collision_box": {
+        "width": 0.25,
+        "height": 0.25
+      },
+      "minecraft:health": {
+        "value": 1,
+        "max": 1
+      },
+      "minecraft:projectile": {
+        "power": 1.2,
+        "gravity": 0.01,
+        "uncertainty_base": 0,
+        "anchor": 1,
+        "on_hit": {
+          "impact_damage": {
+            "damage": 0
+          }
+        }
+      },
+      "minecraft:despawn": {
+        "despawn_from_distance": {}
+      }
+    }
+  }
+}

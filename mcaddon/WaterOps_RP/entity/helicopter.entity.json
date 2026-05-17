@@ -1,0 +1,18 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "wo:helicopter",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/entity/helicopter"
+      },
+      "geometry": {
+        "default": "geometry.helicopter"
+      },
+      "render_controllers": ["controller.render.default"]
+    }
+  }
+}
